@@ -1,0 +1,17 @@
+---
+- name: Installation AD DS + outils d'administration
+  win_feature:
+    name:
+      - AD-Domain-Services
+      - RSAT-AD-Tools
+      - RSAT-AD-PowerShell
+      - DNS
+      - RSAT-DNS-Server
+    state: present
+    include_management_tools: true
+  register: ad_feature_install
+
+- name: Redémarrage si nécessaire après installation des rôles
+  win_reboot:
+    reboot_timeout: 300
+  when: ad_feature_install.reboot_required

@@ -1,0 +1,6 @@
+---
+- name: Déploiement Active Directory
+  hosts: domain_controllers
+  gather_facts: true
+  roles:
+    - active-directory

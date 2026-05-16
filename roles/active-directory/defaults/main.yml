@@ -1,0 +1,66 @@
+---
+ad_domain_name: "corp.infra.local"
+ad_domain_netbios: "CORP"
+ad_domain_functional_level: "WinThreshold"   # Windows Server 2016+
+ad_forest_functional_level: "WinThreshold"
+
+ad_safe_mode_password: "{{ vault_ad_safe_mode_password }}"
+ad_admin_password: "{{ vault_ad_admin_password }}"
+
+ad_sites:
+  - name: SitePrincipal
+    subnet: 10.0.0.0/8
+
+ad_ous:
+  - name: Serveurs
+    path: "DC=corp,DC=infra,DC=local"
+  - name: Utilisateurs
+    path: "DC=corp,DC=infra,DC=local"
+  - name: Postes
+    path: "DC=corp,DC=infra,DC=local"
+  - name: Comptes_Service
+    path: "DC=corp,DC=infra,DC=local"
+  - name: Groupes
+    path: "DC=corp,DC=infra,DC=local"
+
+ad_groups:
+  - name: GRP_Admins_SI
+    scope: Global
+    category: Security
+    ou: "OU=Groupes,DC=corp,DC=infra,DC=local"
+  - name: GRP_Utilisateurs
+    scope: Global
+    category: Security
+    ou: "OU=Groupes,DC=corp,DC=infra,DC=local"
+  - name: GRP_Serveurs_Web
+    scope: Global
+    category: Security
+    ou: "OU=Groupes,DC=corp,DC=infra,DC=local"
+
+ad_users: []
+
+# Politique de mots de passe (ANSSI R31)
+ad_password_policy:
+  min_length: 12
+  max_age_days: 90
+  min_age_days: 1
+  history_count: 12
+  complexity: true
+  lockout_threshold: 5
+  lockout_duration_minutes: 30
+  lockout_observation_window_minutes: 30
+
+# Audit (ANSSI R73)
+ad_audit_categories:
+  - "Account Logon"
+  - "Account Management"
+  - "Directory Service Access"
+  - "Logon/Logoff"
+  - "Object Access"
+  - "Policy Change"
+  - "Privilege Use"
+  - "System"
+
+# LDAPS
+ad_ldaps_enabled: true
+ad_ldaps_port: 636

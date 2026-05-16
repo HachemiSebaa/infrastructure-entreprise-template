@@ -1,0 +1,38 @@
+---
+- name: Création des unités organisationnelles (OU)
+  win_domain_ou:
+    name: "{{ item.name }}"
+    path: "{{ item.path }}"
+    state: present
+    protected: true
+  loop: "{{ ad_ous }}"
+  delegate_to: "{{ groups['domain_controllers'][0] }}"
+  run_once: true
+
+- name: Création des groupes de sécurité
+  win_domain_group:
+    name: "{{ item.name }}"
+    scope: "{{ item.scope }}"
+    category: "{{ item.category }}"
+    organizational_unit: "{{ item.ou }}"
+    state: present
+  loop: "{{ ad_groups }}"
+  delegate_to: "{{ groups['domain_controllers'][0] }}"
+  run_once: true
+
+- name: Création des comptes utilisateurs
+  win_domain_user:
+    name: "{{ item.username }}"
+    firstname: "{{ item.firstname | default('') }}"
+    surname: "{{ item.surname | default('') }}"
+    password: "{{ item.password }}"
+    ou: "{{ item.ou }}"
+    groups: "{{ item.groups | default([]) }}"
+    password_never_expires: false
+    user_cannot_change_password: false
+    account_locked: false
+    state: present
+  loop: "{{ ad_users }}"
+  no_log: true
+  delegate_to: "{{ groups['domain_controllers'][0] }}"
+  run_once: true

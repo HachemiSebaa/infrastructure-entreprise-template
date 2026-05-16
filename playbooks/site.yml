@@ -1,10 +1,16 @@
 ---
-- name: Déploiement complet de l'infrastructure
-  hosts: all
+- name: Déploiement complet de l'infrastructure Linux
+  hosts: all:!domain_controllers
   gather_facts: true
   roles:
     - common
     - anssi-hardening
+
+- name: Déploiement Active Directory
+  hosts: domain_controllers
+  gather_facts: true
+  roles:
+    - active-directory
 
 - name: Déploiement serveurs web
   hosts: webservers

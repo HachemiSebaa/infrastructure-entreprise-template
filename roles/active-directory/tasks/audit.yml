@@ -1,0 +1,39 @@
+---
+- name: Activation audit avancé (ANSSI R73)
+  win_shell: |
+    auditpol /set /subcategory:"Credential Validation" /success:enable /failure:enable
+    auditpol /set /subcategory:"Kerberos Authentication Service" /success:enable /failure:enable
+    auditpol /set /subcategory:"Kerberos Service Ticket Operations" /success:enable /failure:enable
+    auditpol /set /subcategory:"Computer Account Management" /success:enable /failure:enable
+    auditpol /set /subcategory:"Security Group Management" /success:enable /failure:enable
+    auditpol /set /subcategory:"User Account Management" /success:enable /failure:enable
+    auditpol /set /subcategory:"Directory Service Access" /success:enable /failure:enable
+    auditpol /set /subcategory:"Directory Service Changes" /success:enable /failure:enable
+    auditpol /set /subcategory:"Logon" /success:enable /failure:enable
+    auditpol /set /subcategory:"Logoff" /success:enable
+    auditpol /set /subcategory:"Account Lockout" /success:enable /failure:enable
+    auditpol /set /subcategory:"Special Logon" /success:enable
+    auditpol /set /subcategory:"Sensitive Privilege Use" /success:enable /failure:enable
+    auditpol /set /subcategory:"Security State Change" /success:enable /failure:enable
+    auditpol /set /subcategory:"Security System Extension" /success:enable /failure:enable
+    auditpol /set /subcategory:"System Integrity" /success:enable /failure:enable
+
+- name: Augmentation taille journaux de sécurité (200 Mo)
+  win_regedit:
+    path: HKLM:\SYSTEM\CurrentControlSet\Services\EventLog\Security
+    name: MaxSize
+    data: 209715200
+    type: dword
+
+- name: Configuration rétention journaux — écraser si nécessaire
+  win_regedit:
+    path: HKLM:\SYSTEM\CurrentControlSet\Services\EventLog\Security
+    name: Retention
+    data: 0
+    type: dword
+
+- name: Activation transmission des événements vers SIEM
+  win_shell: |
+    winrm set winrm/config/service '@{AllowUnencrypted="false"}'
+    winrm set winrm/config/service/auth '@{Kerberos="true"}'
+  ignore_errors: true

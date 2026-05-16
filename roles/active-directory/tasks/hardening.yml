@@ -1,0 +1,68 @@
+---
+- name: Désactivation SMBv1 (ANSSI)
+  win_shell: |
+    Set-SmbServerConfiguration -EnableSMB1Protocol $false -Force
+    Disable-WindowsOptionalFeature -Online -FeatureName SMB1Protocol -NoRestart
+  ignore_errors: true
+
+- name: Désactivation NTLM v1
+  win_regedit:
+    path: HKLM:\SYSTEM\CurrentControlSet\Control\Lsa
+    name: LmCompatibilityLevel
+    data: 5
+    type: dword
+
+- name: Activation NTLMv2 uniquement
+  win_regedit:
+    path: HKLM:\SYSTEM\CurrentControlSet\Control\Lsa\MSV1_0
+    name: NtlmMinClientSec
+    data: 537395200
+    type: dword
+
+- name: Désactivation WDigest (évite stockage mdp en clair)
+  win_regedit:
+    path: HKLM:\SYSTEM\CurrentControlSet\Control\SecurityProviders\WDigest
+    name: UseLogonCredential
+    data: 0
+    type: dword
+
+- name: Protection LSA (Credential Guard léger)
+  win_regedit:
+    path: HKLM:\SYSTEM\CurrentControlSet\Control\Lsa
+    name: RunAsPPL
+    data: 1
+    type: dword
+
+- name: Désactivation compte Administrateur local (renommage)
+  win_shell: |
+    Rename-LocalUser -Name "Administrator" -NewName "Administrateur_backup"
+    Disable-LocalUser -Name "Administrateur_backup"
+  ignore_errors: true
+
+- name: Désactivation compte Invité
+  win_shell: Disable-LocalUser -Name "Guest" -ErrorAction SilentlyContinue
+  ignore_errors: true
+
+- name: Activation Windows Defender
+  win_shell: |
+    Set-MpPreference -DisableRealtimeMonitoring $false
+    Set-MpPreference -DisableBehaviorMonitoring $false
+    Set-MpPreference -DisableBlockAtFirstSeen $false
+
+- name: Configuration Windows Firewall — DC
+  win_shell: |
+    Set-NetFirewallProfile -Profile Domain,Public,Private -Enabled True
+    Set-NetFirewallProfile -Profile Public -DefaultInboundAction Block -DefaultOutboundAction Allow
+
+- name: Désactivation services inutiles sur DC
+  win_service:
+    name: "{{ item }}"
+    start_mode: disabled
+    state: stopped
+  loop:
+    - XblAuthManager
+    - XblGameSave
+    - XboxNetApiSvc
+    - WSearch
+    - Fax
+  ignore_errors: true

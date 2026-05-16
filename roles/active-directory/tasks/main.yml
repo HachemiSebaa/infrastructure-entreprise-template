@@ -1,0 +1,8 @@
+---
+- import_tasks: install.yml
+- import_tasks: domain.yml
+- import_tasks: structure.yml
+- import_tasks: password_policy.yml
+- import_tasks: hardening.yml
+- import_tasks: audit.yml
+- import_tasks: ldaps.yml

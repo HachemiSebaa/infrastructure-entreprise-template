@@ -1,0 +1,64 @@
+---
+- name: Vérification si le domaine existe déjà
+  win_shell: |
+    try {
+      (Get-ADDomain).DNSRoot
+    } catch {
+      "NOT_FOUND"
+    }
+  register: ad_domain_check
+  changed_when: false
+  ignore_errors: true
+
+- name: Création de la forêt AD (premier DC)
+  win_domain:
+    dns_domain_name: "{{ ad_domain_name }}"
+    domain_netbios_name: "{{ ad_domain_netbios }}"
+    domain_mode: "{{ ad_domain_functional_level }}"
+    forest_mode: "{{ ad_forest_functional_level }}"
+    safe_mode_password: "{{ ad_safe_mode_password }}"
+  register: ad_forest_created
+  when: ad_domain_check.stdout | trim == "NOT_FOUND"
+
+- name: Redémarrage après création de la forêt
+  win_reboot:
+    reboot_timeout: 600
+    post_reboot_delay: 60
+  when:
+    - ad_forest_created is defined
+    - ad_forest_created.changed
+
+- name: Promotion contrôleur de domaine secondaire
+  win_domain_controller:
+    dns_domain_name: "{{ ad_domain_name }}"
+    domain_admin_user: "Administrator@{{ ad_domain_name }}"
+    domain_admin_password: "{{ ad_admin_password }}"
+    safe_mode_password: "{{ ad_safe_mode_password }}"
+    state: domain_controller
+  register: ad_dc_promoted
+  when:
+    - inventory_hostname != groups['domain_controllers'][0]
+    - ad_domain_check.stdout | trim != "NOT_FOUND"
+
+- name: Redémarrage après promotion DC secondaire
+  win_reboot:
+    reboot_timeout: 600
+    post_reboot_delay: 60
+  when:
+    - ad_dc_promoted is defined
+    - ad_dc_promoted.changed
+
+- name: Configuration site AD
+  win_shell: |
+    Import-Module ActiveDirectory
+    $site = Get-ADReplicationSite -Filter { Name -eq "{{ item.name }}" } -ErrorAction SilentlyContinue
+    if (-not $site) {
+      New-ADReplicationSite -Name "{{ item.name }}"
+    }
+    $subnet = Get-ADReplicationSubnet -Filter { Name -eq "{{ item.subnet }}" } -ErrorAction SilentlyContinue
+    if (-not $subnet) {
+      New-ADReplicationSubnet -Name "{{ item.subnet }}" -Site "{{ item.name }}"
+    }
+  loop: "{{ ad_sites }}"
+  delegate_to: "{{ groups['domain_controllers'][0] }}"
+  run_once: true

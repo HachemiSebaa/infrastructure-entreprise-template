@@ -7,32 +7,34 @@ Conçu pour être réutilisable, versionné et applicable rapidement sur un nouv
 ## Architecture
 
 ```
-                    ┌─────────────────────────────────────────┐
-                    │           Réseau d'entreprise            │
-                    │                                          │
-          ┌─────────▼─────────┐                               │
-          │   Bastion SSH     │  10.0.0.5                     │
-          └─────────┬─────────┘                               │
-                    │                                          │
-       ┌────────────┼────────────┐                            │
-       │            │            │                            │
-┌──────▼──────┐ ┌───▼───┐ ┌────▼────┐                       │
-│  Web x2     │ │  DB   │ │Monitor  │                        │
-│10.0.1.10/11 │ │10.0.2 │ │10.0.3   │                        │
-└─────────────┘ └───────┘ └─────────┘                       │
-                    │                                          │
-                    └─────────────────────────────────────────┘
+                    ┌─────────────────────────────────────────────┐
+                    │             Réseau d'entreprise              │
+                    │                                              │
+          ┌─────────▼─────────┐     ┌──────────────────┐         │
+          │   Bastion SSH     │     │  DC01 / DC02     │         │
+          │   10.0.0.5        │     │  Active Directory │         │
+          └─────────┬─────────┘     │  10.0.4.10/11    │         │
+                    │               └──────────────────┘         │
+       ┌────────────┼────────────┐                                │
+       │            │            │                                │
+┌──────▼──────┐ ┌───▼───┐ ┌────▼────┐                           │
+│  Web x2     │ │  DB   │ │Monitor  │                            │
+│10.0.1.10/11 │ │10.0.2 │ │10.0.3   │                            │
+└─────────────┘ └───────┘ └─────────┘                           │
+                    │                                              │
+                    └─────────────────────────────────────────────┘
 ```
 
 ## Rôles
 
-| Rôle | Description |
-|------|-------------|
-| `common` | Hostname, DNS, NTP, timezone |
-| `anssi-hardening` | Sécurisation système (SSH, kernel, comptes, firewall, logs, filesystem) |
-| `nginx` | Serveur web |
-| `postgresql` | Base de données PostgreSQL |
-| `monitoring` | Stack de supervision |
+| Rôle | OS cible | Description |
+|------|----------|-------------|
+| `common` | Linux | Hostname, DNS, NTP, timezone |
+| `anssi-hardening` | Linux | Sécurisation système (SSH, kernel, comptes, firewall, logs, filesystem) |
+| `nginx` | Linux | Serveur web |
+| `postgresql` | Linux | Base de données PostgreSQL |
+| `monitoring` | Linux | Stack de supervision |
+| `active-directory` | Windows Server | Active Directory, GPO, LDAPS, audit |
 
 ## Ce qui est configuré
 
@@ -74,16 +76,34 @@ Conçu pour être réutilisable, versionné et applicable rapidement sur un nouv
 - pg_hba strict, logs DDL et connexions
 - Droits PUBLIC révoqués
 
+### Active Directory (Windows Server)
+- Forêt AD + contrôleurs de domaine (primaire + secondaire)
+- OUs, groupes de sécurité, comptes utilisateurs
+- Politique de mots de passe domaine + Fine-Grained PSO pour les admins (16 car. min)
+- SMBv1 désactivé, NTLMv1 désactivé, NTLMv2 uniquement
+- WDigest désactivé (évite stockage mots de passe en clair en mémoire)
+- Protection LSA (RunAsPPL), Credential Guard
+- LDAPS avec channel binding et LDAP signing obligatoire
+- Audit avancé : Kerberos, logons, changements AD, utilisation des privilèges
+- Journaux sécurité 200 Mo, transmission vers SIEM
+
 ### Monitoring
 - Prometheus + Grafana + Alertmanager + Node Exporter
 - Alertes : instance down, CPU, RAM, disque, échecs SSH
 
 ## Prérequis
 
+**Linux**
 - Ansible >= 2.12
 - Python 3 sur les cibles
 - Ubuntu 22.04 LTS ou Debian 12
 - Clé SSH déployée sur les cibles
+
+**Windows / Active Directory**
+- Windows Server 2019 ou 2022
+- WinRM HTTPS activé sur les cibles (`Enable-PSRemoting`)
+- Collection Ansible : `ansible-galaxy collection install ansible.windows community.windows`
+- Kerberos configuré sur le nœud de contrôle (`python3-gssapi`)
 
 ## Utilisation
 
@@ -95,10 +115,13 @@ cd infrastructure-entreprise-template
 vim inventory/production/hosts.yml
 vim inventory/production/group_vars/all.yml
 
-# Déploiement complet
+# Déploiement complet (Linux)
 ansible-playbook playbooks/site.yml
 
-# Sécurisation uniquement
+# Active Directory uniquement
+ansible-playbook playbooks/active-directory.yml
+
+# Sécurisation Linux uniquement
 ansible-playbook playbooks/hardening.yml
 
 # Dry-run
@@ -124,7 +147,8 @@ ansible-playbook playbooks/site.yml --check --diff
     ├── anssi-hardening/
     ├── nginx/
     ├── postgresql/
-    └── monitoring/
+    ├── monitoring/
+    └── active-directory/
 ```
 
 ## Références ANSSI
