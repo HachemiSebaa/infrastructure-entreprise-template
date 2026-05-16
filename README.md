@@ -58,6 +58,7 @@ ansible-playbook playbooks/site.yml --ask-vault-pass
 | `postgresql` | Linux | Base de données PostgreSQL |
 | `monitoring` | Linux | Stack de supervision |
 | `active-directory` | Windows Server | Active Directory, GPO, LDAPS, audit |
+| `dns-windows` | Windows Server | DNS Server, zones AD-intégrées, enregistrements, DNSSEC |
 | `dhcp-windows` | Windows Server | DHCP Server, scopes, réservations, failover |
 
 ## Ce qui est configuré
@@ -110,6 +111,15 @@ ansible-playbook playbooks/site.yml --ask-vault-pass
 - LDAPS avec channel binding et LDAP signing obligatoire
 - Audit avancé : Kerberos, logons, changements AD, utilisation des privilèges
 - Journaux sécurité 200 Mo, transmission vers SIEM
+
+### DNS Windows Server
+- Zones AD-intégrées avec réplication automatique entre DC
+- Redirecteurs configurables (Cloudflare, Quad9...)
+- Enregistrements statiques : A, CNAME, MX, PTR automatique
+- DNSSEC — signature des zones
+- Protection cache poisoning : socket pool 2500, cache locking 100%
+- Transfert de zone désactivé, récursion externe bloquée
+- Audit et logs analytiques activés
 
 ### DHCP Windows Server
 - Installation et autorisation du rôle DHCP dans Active Directory

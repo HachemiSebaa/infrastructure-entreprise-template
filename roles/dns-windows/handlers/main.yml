@@ -1,0 +1,5 @@
+---
+- name: restart dns
+  win_service:
+    name: DNS
+    state: restarted

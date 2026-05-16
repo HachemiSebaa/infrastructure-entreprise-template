@@ -1,0 +1,26 @@
+---
+- name: Création des zones DNS
+  win_shell: |
+    Import-Module DnsServer
+    $zone = Get-DnsServerZone -Name "{{ item.name }}" -ErrorAction SilentlyContinue
+    if (-not $zone) {
+      Add-DnsServerPrimaryZone `
+        -Name "{{ item.name }}" `
+        -ReplicationScope "{{ item.replication }}" `
+        -DynamicUpdate "{{ item.dynamic_update }}"
+      Write-Host "Zone {{ item.name }} créée"
+    } else {
+      Write-Host "Zone {{ item.name }} existe déjà"
+    }
+  loop: "{{ dns_zones }}"
+  register: zone_result
+  changed_when: "'créée' in zone_result.stdout"
+
+- name: Activation des mises à jour dynamiques sécurisées
+  win_shell: |
+    Import-Module DnsServer
+    Set-DnsServerPrimaryZone `
+      -Name "{{ item.name }}" `
+      -DynamicUpdate "{{ item.dynamic_update }}"
+  loop: "{{ dns_zones }}"
+  when: item.dynamic_update is defined

@@ -1,0 +1,19 @@
+---
+- name: Configuration des redirecteurs DNS
+  win_shell: |
+    Import-Module DnsServer
+    $current = (Get-DnsServerForwarder).IPAddress.IPAddressToString
+    $desired  = @({{ dns_forwarders | map('quote') | join(',') }})
+    $diff = Compare-Object $current $desired
+    if ($diff) {
+      Set-DnsServerForwarder -IPAddress $desired -UseRootHint ${{ (not dns_root_hints_enabled) | ternary('false', 'true') }}
+      Write-Host "Redirecteurs mis à jour"
+    }
+  register: forwarder_result
+  changed_when: "'mis à jour' in forwarder_result.stdout"
+
+- name: Désactivation des root hints si redirecteurs configurés
+  win_shell: |
+    Import-Module DnsServer
+    Set-DnsServerForwarder -UseRootHint ${{ dns_root_hints_enabled | ternary('true', 'false') }}
+  when: not dns_root_hints_enabled

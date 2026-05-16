@@ -1,0 +1,49 @@
+---
+# Redirecteurs DNS (forwarders)
+dns_forwarders:
+  - "1.1.1.1"
+  - "9.9.9.9"
+
+# Zones DNS supplémentaires (la zone AD est créée automatiquement)
+dns_zones:
+  - name: "infra.local"
+    type: Primary
+    replication: Domain       # Domain, Forest, Legacy, None
+    dynamic_update: Secure    # Secure, NonsecureAndSecure, None
+  - name: "1.0.10.in-addr.arpa"
+    type: Primary
+    replication: Domain
+    dynamic_update: Secure
+
+# Enregistrements DNS statiques
+dns_records:
+  - zone: "infra.local"
+    name: "bastion"
+    type: A
+    value: "10.0.0.5"
+  - zone: "infra.local"
+    name: "web01"
+    type: A
+    value: "10.0.1.10"
+  - zone: "infra.local"
+    name: "web02"
+    type: A
+    value: "10.0.1.11"
+  - zone: "infra.local"
+    name: "db01"
+    type: A
+    value: "10.0.2.10"
+  - zone: "infra.local"
+    name: "mon01"
+    type: A
+    value: "10.0.3.10"
+  - zone: "infra.local"
+    name: "www"
+    type: CNAME
+    value: "web01.infra.local."
+
+# Sécurité
+dns_disable_recursion_external: true
+dns_socket_pool_size: 2500
+dns_cache_locking_percent: 100
+dns_root_hints_enabled: false

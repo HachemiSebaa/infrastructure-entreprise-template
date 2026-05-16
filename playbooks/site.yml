@@ -11,6 +11,7 @@
   gather_facts: true
   roles:
     - active-directory
+    - dns-windows
     - dhcp-windows
 
 - name: Déploiement serveurs web

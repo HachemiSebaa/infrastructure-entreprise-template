@@ -1,0 +1,27 @@
+---
+- name: Activation des logs analytiques DNS
+  win_shell: |
+    wevtutil sl "Microsoft-Windows-DNS-Server/Analytical" /e:true /ms:52428800
+    wevtutil sl "Microsoft-Windows-DNS-Server/Audit" /e:true /ms:52428800
+
+- name: Activation du diagnostic DNS
+  win_shell: |
+    Import-Module DnsServer
+    Set-DnsServerDiagnostics `
+      -Queries $true `
+      -Answers $true `
+      -Notifications $true `
+      -Update $true `
+      -QuestionTransactions $true `
+      -UnmatchedResponse $true `
+      -SendPackets $true `
+      -ReceivePackets $true `
+      -TcpInformation $true `
+      -EventLogLevel 4
+
+- name: Configuration de la taille maximale des logs DNS
+  win_regedit:
+    path: HKLM:\SYSTEM\CurrentControlSet\Services\DNS\Parameters
+    name: LogFileMaxSize
+    data: 52428800
+    type: dword

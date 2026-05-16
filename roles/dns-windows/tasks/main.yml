@@ -1,0 +1,7 @@
+---
+- import_tasks: install.yml
+- import_tasks: forwarders.yml
+- import_tasks: zones.yml
+- import_tasks: records.yml
+- import_tasks: hardening.yml
+- import_tasks: audit.yml

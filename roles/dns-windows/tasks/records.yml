@@ -1,0 +1,33 @@
+---
+- name: Création des enregistrements A
+  win_shell: |
+    Import-Module DnsServer
+    $existing = Get-DnsServerResourceRecord `
+      -ZoneName "{{ item.zone }}" `
+      -Name "{{ item.name }}" `
+      -RRType "{{ item.type }}" `
+      -ErrorAction SilentlyContinue
+    if (-not $existing) {
+      {% if item.type == 'A' %}
+      Add-DnsServerResourceRecordA `
+        -ZoneName "{{ item.zone }}" `
+        -Name "{{ item.name }}" `
+        -IPv4Address "{{ item.value }}" `
+        -CreatePtr
+      {% elif item.type == 'CNAME' %}
+      Add-DnsServerResourceRecordCName `
+        -ZoneName "{{ item.zone }}" `
+        -Name "{{ item.name }}" `
+        -HostNameAlias "{{ item.value }}"
+      {% elif item.type == 'MX' %}
+      Add-DnsServerResourceRecordMX `
+        -ZoneName "{{ item.zone }}" `
+        -Name "{{ item.name }}" `
+        -MailExchange "{{ item.value }}" `
+        -Preference {{ item.preference | default(10) }}
+      {% endif %}
+      Write-Host "Enregistrement {{ item.name }} créé"
+    }
+  loop: "{{ dns_records }}"
+  register: record_result
+  changed_when: "'créé' in record_result.stdout"

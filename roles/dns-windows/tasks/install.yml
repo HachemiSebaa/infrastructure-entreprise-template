@@ -1,0 +1,20 @@
+---
+- name: Installation du rôle DNS Server
+  win_feature:
+    name:
+      - DNS
+      - RSAT-DNS-Server
+    state: present
+    include_management_tools: true
+  register: dns_install
+
+- name: Redémarrage si nécessaire
+  win_reboot:
+    reboot_timeout: 300
+  when: dns_install.reboot_required
+
+- name: Activation et démarrage du service DNS
+  win_service:
+    name: DNS
+    state: started
+    start_mode: auto

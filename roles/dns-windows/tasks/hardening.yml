@@ -1,0 +1,43 @@
+---
+- name: Protection contre le cache poisoning (socket pool)
+  win_shell: |
+    Import-Module DnsServer
+    Set-DnsServerSetting -SocketPoolSize {{ dns_socket_pool_size }}
+
+- name: Activation du cache locking (100%)
+  win_shell: |
+    Import-Module DnsServer
+    Set-DnsServerCache -LockingPercent {{ dns_cache_locking_percent }}
+
+- name: Activation DNSSEC — signature de la zone AD
+  win_shell: |
+    Import-Module DnsServer
+    $zone = Get-DnsServerZone -Name "{{ ad_domain_name }}" -ErrorAction SilentlyContinue
+    if ($zone -and -not $zone.IsSigned) {
+      Invoke-DnsServerZoneSign `
+        -ZoneName "{{ ad_domain_name }}" `
+        -SignWithDefault `
+        -Force
+      Write-Host "Zone signée DNSSEC"
+    }
+  ignore_errors: true
+
+- name: Désactivation de la récursion vers l'extérieur
+  win_shell: |
+    Import-Module DnsServer
+    Set-DnsServerRecursion -Enable ${{ (not dns_disable_recursion_external) | ternary('true', 'false') }} -Timeout 8 -RetryInterval 3
+  when: dns_disable_recursion_external
+
+- name: Désactivation du transfert de zone non autorisé
+  win_shell: |
+    Import-Module DnsServer
+    Get-DnsServerZone | ForEach-Object {
+      Set-DnsServerZoneTransfer -Name $_.ZoneName -SecondaryServers "NoTransfer" -ErrorAction SilentlyContinue
+    }
+
+- name: Activation de la protection contre les requêtes malformées
+  win_regedit:
+    path: HKLM:\SYSTEM\CurrentControlSet\Services\DNS\Parameters
+    name: EnableEDnsProbes
+    data: 0
+    type: dword
