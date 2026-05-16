@@ -4,6 +4,29 @@ Template Ansible pour déployer une infrastructure Linux d'entreprise conforme a
 
 Conçu pour être réutilisable, versionné et applicable rapidement sur un nouveau parc.
 
+## Démarrage rapide
+
+```bash
+git clone https://github.com/HachemiSebaa/infrastructure-entreprise-template.git
+cd infrastructure-entreprise-template
+./wizard.sh
+```
+
+Le wizard guide la configuration complète de l'infrastructure de façon interactive : noms des serveurs, adresses IP (avec suggestions), domaine AD, mots de passe, politique de sécurité, alertes. Il génère automatiquement tous les fichiers d'inventaire et de variables Ansible.
+
+Une fois le wizard terminé :
+
+```bash
+# Chiffrer les mots de passe
+ansible-vault encrypt vault.yml
+
+# Vérifier la connectivité
+ansible all -m ping --ask-vault-pass
+
+# Déployer
+ansible-playbook playbooks/site.yml --ask-vault-pass
+```
+
 ## Architecture
 
 ```
