@@ -1,0 +1,52 @@
+---
+- name: Configuration politique de mots de passe (ANSSI R31)
+  lineinfile:
+    path: /etc/login.defs
+    regexp: "{{ item.regexp }}"
+    line: "{{ item.line }}"
+  loop:
+    - { regexp: '^PASS_MAX_DAYS', line: "PASS_MAX_DAYS  {{ password_max_days }}" }
+    - { regexp: '^PASS_MIN_DAYS', line: "PASS_MIN_DAYS  {{ password_min_days }}" }
+    - { regexp: '^PASS_WARN_AGE', line: "PASS_WARN_AGE  {{ password_warn_days }}" }
+    - { regexp: '^PASS_MIN_LEN',  line: "PASS_MIN_LEN   {{ password_min_length }}" }
+
+- name: Installation pam-pwquality
+  package:
+    name: libpam-pwquality
+    state: present
+
+- name: Configuration complexité mots de passe PAM
+  lineinfile:
+    path: /etc/security/pwquality.conf
+    regexp: "{{ item.regexp }}"
+    line: "{{ item.line }}"
+  loop:
+    - { regexp: '^minlen',   line: "minlen = {{ password_min_length }}" }
+    - { regexp: '^dcredit',  line: "dcredit = -1" }
+    - { regexp: '^ucredit',  line: "ucredit = -1" }
+    - { regexp: '^lcredit',  line: "lcredit = -1" }
+    - { regexp: '^ocredit',  line: "ocredit = -1" }
+    - { regexp: '^remember', line: "remember = {{ password_remember }}" }
+
+- name: Verrouillage compte root (ANSSI R33)
+  user:
+    name: root
+    password_lock: true
+
+- name: Suppression des comptes système inutiles
+  user:
+    name: "{{ item }}"
+    state: absent
+  loop:
+    - games
+    - news
+    - uucp
+    - proxy
+  ignore_errors: true
+
+- name: Configuration sudo — pas de NOPASSWD (ANSSI R62)
+  lineinfile:
+    path: /etc/sudoers
+    regexp: '^%sudo'
+    line: '%sudo ALL=(ALL:ALL) ALL'
+    validate: 'visudo -cf %s'

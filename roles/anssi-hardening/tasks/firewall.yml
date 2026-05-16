@@ -1,0 +1,29 @@
+---
+- name: Installation UFW
+  package:
+    name: ufw
+    state: present
+
+- name: Politique par défaut — tout bloquer en entrée
+  ufw:
+    policy: deny
+    direction: incoming
+
+- name: Politique par défaut — autoriser en sortie
+  ufw:
+    policy: allow
+    direction: outgoing
+
+- name: Autorisation SSH
+  ufw:
+    rule: allow
+    port: "{{ ssh_port }}"
+    proto: tcp
+
+- name: Activation UFW
+  ufw:
+    state: enabled
+
+- name: Logging UFW activé
+  ufw:
+    logging: "on"

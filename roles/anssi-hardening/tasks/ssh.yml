@@ -1,0 +1,45 @@
+---
+- name: Configuration SSH (ANSSI R67)
+  template:
+    src: sshd_config.j2
+    dest: /etc/ssh/sshd_config
+    owner: root
+    group: root
+    mode: "0600"
+    validate: /usr/sbin/sshd -t -f %s
+  notify: restart sshd
+
+- name: Suppression des clés hôtes SSH faibles
+  file:
+    path: "{{ item }}"
+    state: absent
+  loop:
+    - /etc/ssh/ssh_host_dsa_key
+    - /etc/ssh/ssh_host_dsa_key.pub
+    - /etc/ssh/ssh_host_ecdsa_key
+    - /etc/ssh/ssh_host_ecdsa_key.pub
+
+- name: Génération clé hôte Ed25519
+  command: ssh-keygen -t ed25519 -f /etc/ssh/ssh_host_ed25519_key -N ""
+  args:
+    creates: /etc/ssh/ssh_host_ed25519_key
+
+- name: Permissions strictes sur les clés hôtes
+  file:
+    path: /etc/ssh/ssh_host_ed25519_key
+    owner: root
+    group: root
+    mode: "0600"
+
+- name: Bannière de connexion SSH
+  copy:
+    content: |
+      ########################################################
+      #  Accès réservé aux utilisateurs autorisés             #
+      #  Toute activité est enregistrée et surveillée         #
+      #  Conformité ANSSI — Politique de sécurité en vigueur  #
+      ########################################################
+    dest: /etc/issue.net
+    owner: root
+    group: root
+    mode: "0644"

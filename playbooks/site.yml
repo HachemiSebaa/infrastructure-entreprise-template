@@ -1,0 +1,22 @@
+---
+- name: Déploiement complet de l'infrastructure
+  hosts: all
+  gather_facts: true
+  roles:
+    - common
+    - anssi-hardening
+
+- name: Déploiement serveurs web
+  hosts: webservers
+  roles:
+    - nginx
+
+- name: Déploiement bases de données
+  hosts: databases
+  roles:
+    - postgresql
+
+- name: Déploiement monitoring
+  hosts: monitoring
+  roles:
+    - monitoring

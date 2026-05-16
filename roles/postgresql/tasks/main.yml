@@ -1,0 +1,69 @@
+---
+- name: Installation PostgreSQL
+  package:
+    name:
+      - "postgresql-{{ postgresql_version }}"
+      - "postgresql-client-{{ postgresql_version }}"
+      - python3-psycopg2
+    state: present
+
+- name: Déploiement postgresql.conf
+  template:
+    src: postgresql.conf.j2
+    dest: "{{ postgresql_config_dir }}/postgresql.conf"
+    owner: postgres
+    group: postgres
+    mode: "0600"
+  notify: restart postgresql
+
+- name: Déploiement pg_hba.conf — authentification stricte
+  template:
+    src: pg_hba.conf.j2
+    dest: "{{ postgresql_config_dir }}/pg_hba.conf"
+    owner: postgres
+    group: postgres
+    mode: "0600"
+  notify: restart postgresql
+
+- name: Création des bases de données
+  become_user: postgres
+  postgresql_db:
+    name: "{{ item.name }}"
+    encoding: UTF8
+    lc_collate: fr_FR.UTF-8
+    lc_ctype: fr_FR.UTF-8
+    state: present
+  loop: "{{ postgresql_databases }}"
+
+- name: Création des utilisateurs PostgreSQL
+  become_user: postgres
+  postgresql_user:
+    name: "{{ item.name }}"
+    password: "{{ item.password }}"
+    role_attr_flags: "{{ item.role_attr_flags | default('NOSUPERUSER,NOCREATEDB,NOCREATEROLE') }}"
+    state: present
+  loop: "{{ postgresql_users }}"
+  no_log: true
+
+- name: Révocation des droits PUBLIC sur les bases
+  become_user: postgres
+  postgresql_privs:
+    db: "{{ item.name }}"
+    role: PUBLIC
+    type: database
+    privs: ALL
+    state: absent
+  loop: "{{ postgresql_databases }}"
+
+- name: Ouverture port PostgreSQL dans UFW (réseau interne uniquement)
+  ufw:
+    rule: allow
+    port: "{{ postgresql_port }}"
+    proto: tcp
+    src: "10.0.0.0/8"
+
+- name: Activation PostgreSQL
+  systemd:
+    name: postgresql
+    state: started
+    enabled: true

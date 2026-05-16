@@ -1,0 +1,76 @@
+---
+- name: Création utilisateur prometheus
+  user:
+    name: prometheus
+    shell: /usr/sbin/nologin
+    system: true
+    create_home: false
+
+- name: Création répertoires Prometheus
+  file:
+    path: "{{ item }}"
+    state: directory
+    owner: prometheus
+    group: prometheus
+    mode: "0750"
+  loop:
+    - /etc/prometheus
+    - /var/lib/prometheus
+
+- name: Téléchargement Prometheus
+  get_url:
+    url: "https://github.com/prometheus/prometheus/releases/download/v{{ prometheus_version }}/prometheus-{{ prometheus_version }}.linux-amd64.tar.gz"
+    dest: "/tmp/prometheus-{{ prometheus_version }}.tar.gz"
+    mode: "0644"
+
+- name: Extraction Prometheus
+  unarchive:
+    src: "/tmp/prometheus-{{ prometheus_version }}.tar.gz"
+    dest: /tmp
+    remote_src: true
+
+- name: Installation binaires Prometheus
+  copy:
+    src: "/tmp/prometheus-{{ prometheus_version }}.linux-amd64/{{ item }}"
+    dest: "/usr/local/bin/{{ item }}"
+    owner: root
+    group: root
+    mode: "0755"
+    remote_src: true
+  loop:
+    - prometheus
+    - promtool
+
+- name: Déploiement configuration Prometheus
+  template:
+    src: prometheus.yml.j2
+    dest: /etc/prometheus/prometheus.yml
+    owner: prometheus
+    group: prometheus
+    mode: "0640"
+  notify: restart prometheus
+
+- name: Déploiement service systemd Prometheus
+  template:
+    src: prometheus.service.j2
+    dest: /etc/systemd/system/prometheus.service
+    owner: root
+    group: root
+    mode: "0644"
+  notify:
+    - reload systemd
+    - restart prometheus
+
+- name: Ouverture port Prometheus (réseau monitoring uniquement)
+  ufw:
+    rule: allow
+    port: "{{ prometheus_port }}"
+    proto: tcp
+    src: "10.0.3.0/24"
+
+- name: Activation Prometheus
+  systemd:
+    name: prometheus
+    state: started
+    enabled: true
+    daemon_reload: true

@@ -1,0 +1,54 @@
+# Configuration SSH — ANSSI R67
+Port {{ ssh_port }}
+AddressFamily inet
+ListenAddress 0.0.0.0
+
+# Protocole et algorithmes
+Protocol 2
+HostKey /etc/ssh/ssh_host_ed25519_key
+HostKey /etc/ssh/ssh_host_rsa_key
+
+KexAlgorithms {{ ssh_kex | join(',') }}
+Ciphers {{ ssh_ciphers | join(',') }}
+MACs {{ ssh_macs | join(',') }}
+
+# Authentification
+PermitRootLogin {{ ssh_permit_root_login }}
+PasswordAuthentication {{ ssh_password_authentication }}
+PermitEmptyPasswords no
+ChallengeResponseAuthentication no
+UsePAM yes
+AuthenticationMethods publickey
+
+MaxAuthTries {{ ssh_max_auth_tries }}
+MaxSessions 4
+LoginGraceTime 30
+
+PubkeyAuthentication yes
+AuthorizedKeysFile .ssh/authorized_keys
+
+# Sessions
+ClientAliveInterval {{ ssh_client_alive_interval }}
+ClientAliveCountMax {{ ssh_client_alive_count_max }}
+TCPKeepAlive no
+
+# Restrictions
+X11Forwarding no
+AllowAgentForwarding no
+AllowTcpForwarding no
+PermitTunnel no
+GatewayPorts no
+PermitUserEnvironment no
+AllowGroups {{ ssh_allowed_groups }}
+
+# Bannière
+Banner /etc/issue.net
+
+# Logs
+SyslogFacility AUTH
+LogLevel VERBOSE
+
+# Divers
+PrintMotd no
+AcceptEnv LANG LC_*
+Subsystem sftp /usr/lib/openssh/sftp-server -f AUTHPRIV -l INFO

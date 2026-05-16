@@ -1,0 +1,29 @@
+server {
+    listen 80;
+    server_name {{ item.server_name }};
+    return 301 https://$host$request_uri;
+}
+
+server {
+    listen 443 ssl http2;
+    server_name {{ item.server_name }};
+    root {{ item.root | default('/var/www/' + item.name) }};
+    index index.html;
+
+    ssl_certificate     {{ item.ssl_cert | default('/etc/ssl/certs/' + item.name + '.crt') }};
+    ssl_certificate_key {{ item.ssl_key  | default('/etc/ssl/private/' + item.name + '.key') }};
+
+    limit_req zone=general burst=20 nodelay;
+    limit_conn addr 20;
+
+    location / {
+        try_files $uri $uri/ =404;
+    }
+
+    location ~* \.(env|git|htaccess|htpasswd|ini|log|sh|sql|conf)$ {
+        deny all;
+    }
+
+    access_log /var/log/nginx/{{ item.name }}_access.log main;
+    error_log  /var/log/nginx/{{ item.name }}_error.log warn;
+}

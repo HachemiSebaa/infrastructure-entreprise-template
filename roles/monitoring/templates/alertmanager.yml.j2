@@ -1,0 +1,31 @@
+global:
+  resolve_timeout: 5m
+
+route:
+  group_by: ['alertname', 'instance']
+  group_wait: 30s
+  group_interval: 5m
+  repeat_interval: 4h
+  receiver: default
+
+  routes:
+    - match:
+        severity: critical
+      receiver: critical
+
+receivers:
+  - name: default
+    email_configs:
+      - to: {{ alertmanager_email_to }}
+        require_tls: true
+
+  - name: critical
+    email_configs:
+      - to: {{ alertmanager_email_to }}
+        require_tls: true
+{% if alertmanager_slack_webhook %}
+    slack_configs:
+      - api_url: {{ alertmanager_slack_webhook }}
+        channel: '#alertes-infra'
+        title: '[CRITIQUE] {{ "{{" }} .CommonAnnotations.summary {{ "}}" }}'
+{% endif %}

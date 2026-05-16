@@ -1,0 +1,5 @@
+# Envoi des logs vers le serveur centralisé
+*.* @{{ syslog_server }}:{{ syslog_port }}
+
+# Logs d'authentification
+auth,authpriv.* @{{ syslog_server }}:{{ syslog_port }}

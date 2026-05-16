@@ -1,0 +1,28 @@
+---
+- name: Application des paramètres sysctl ANSSI
+  sysctl:
+    name: "{{ item.key }}"
+    value: "{{ item.value }}"
+    state: present
+    reload: true
+    sysctl_file: /etc/sysctl.d/99-anssi-hardening.conf
+  loop: "{{ sysctl_hardening | dict2items }}"
+
+- name: Blacklist des modules noyau non nécessaires (ANSSI R12)
+  kernel_blacklist:
+    name: "{{ item }}"
+    state: present
+  loop: "{{ blacklisted_modules }}"
+
+- name: Protection GRUB — permissions
+  file:
+    path: /boot/grub/grub.cfg
+    owner: root
+    group: root
+    mode: "0400"
+
+- name: Désactivation core dumps (ANSSI R55)
+  lineinfile:
+    path: /etc/security/limits.conf
+    line: "* hard core 0"
+    state: present

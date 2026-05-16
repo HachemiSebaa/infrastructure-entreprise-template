@@ -1,0 +1,33 @@
+---
+- name: Mise à jour du cache APT
+  apt:
+    update_cache: true
+    cache_valid_time: 3600
+
+- name: Application des mises à jour de sécurité
+  apt:
+    upgrade: dist
+    only_upgrade: true
+
+- name: Installation des outils de sécurité essentiels
+  package:
+    name:
+      - fail2ban
+      - unattended-upgrades
+      - apt-listchanges
+      - logwatch
+      - rkhunter
+      - aide
+      - lynis
+    state: present
+
+- name: Activation mises à jour automatiques de sécurité
+  copy:
+    content: |
+      APT::Periodic::Update-Package-Lists "1";
+      APT::Periodic::Unattended-Upgrade "1";
+      APT::Periodic::AutocleanInterval "7";
+    dest: /etc/apt/apt.conf.d/20auto-upgrades
+    owner: root
+    group: root
+    mode: "0644"

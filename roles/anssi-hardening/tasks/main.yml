@@ -1,0 +1,9 @@
+---
+- import_tasks: packages.yml
+- import_tasks: users.yml
+- import_tasks: ssh.yml
+- import_tasks: kernel.yml
+- import_tasks: firewall.yml
+- import_tasks: logging.yml
+- import_tasks: services.yml
+- import_tasks: filesystem.yml

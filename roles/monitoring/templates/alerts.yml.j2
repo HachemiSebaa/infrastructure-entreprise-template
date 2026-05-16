@@ -1,0 +1,45 @@
+groups:
+  - name: infrastructure
+    rules:
+      - alert: InstanceDown
+        expr: up == 0
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Instance {{ $labels.instance }} inaccessible"
+          description: "{{ $labels.instance }} est down depuis plus de 2 minutes."
+
+      - alert: CpuHighUsage
+        expr: 100 - (avg by(instance) (rate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 85
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "CPU élevé sur {{ $labels.instance }}"
+          description: "CPU > 85% depuis 5 minutes."
+
+      - alert: MemoryHighUsage
+        expr: (node_memory_MemTotal_bytes - node_memory_MemAvailable_bytes) / node_memory_MemTotal_bytes * 100 > 90
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Mémoire critique sur {{ $labels.instance }}"
+          description: "RAM > 90% utilisée."
+
+      - alert: DiskSpaceLow
+        expr: (node_filesystem_avail_bytes{mountpoint="/"} / node_filesystem_size_bytes{mountpoint="/"}) * 100 < 15
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Disque faible sur {{ $labels.instance }}"
+          description: "Espace disque / < 15%."
+
+      - alert: SshFailedLogins
+        expr: increase(node_systemd_unit_state{name="ssh.service",state="failed"}[5m]) > 0
+        labels:
+          severity: critical
+        annotations:
+          summary: "Tentatives SSH échouées sur {{ $labels.instance }}"

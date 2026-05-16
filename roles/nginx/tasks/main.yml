@@ -1,0 +1,84 @@
+---
+- name: Installation Nginx
+  package:
+    name: nginx
+    state: present
+
+- name: Déploiement nginx.conf
+  template:
+    src: nginx.conf.j2
+    dest: /etc/nginx/nginx.conf
+    owner: root
+    group: root
+    mode: "0644"
+    validate: nginx -t -c %s
+  notify: restart nginx
+
+- name: Déploiement configuration SSL/TLS
+  template:
+    src: ssl-params.conf.j2
+    dest: /etc/nginx/conf.d/ssl-params.conf
+    owner: root
+    group: root
+    mode: "0644"
+  notify: restart nginx
+
+- name: Déploiement headers de sécurité
+  template:
+    src: security-headers.conf.j2
+    dest: /etc/nginx/conf.d/security-headers.conf
+    owner: root
+    group: root
+    mode: "0644"
+  notify: restart nginx
+
+- name: Suppression site par défaut
+  file:
+    path: /etc/nginx/sites-enabled/default
+    state: absent
+  notify: restart nginx
+
+- name: Déploiement des sites virtuels
+  template:
+    src: vhost.conf.j2
+    dest: "/etc/nginx/sites-available/{{ item.name }}.conf"
+    owner: root
+    group: root
+    mode: "0644"
+  loop: "{{ nginx_sites }}"
+  notify: restart nginx
+
+- name: Activation des sites virtuels
+  file:
+    src: "/etc/nginx/sites-available/{{ item.name }}.conf"
+    dest: "/etc/nginx/sites-enabled/{{ item.name }}.conf"
+    state: link
+  loop: "{{ nginx_sites }}"
+  notify: restart nginx
+
+- name: Permissions strictes sur les répertoires Nginx
+  file:
+    path: "{{ item }}"
+    owner: root
+    group: www-data
+    mode: "0750"
+  loop:
+    - /etc/nginx
+    - /etc/nginx/conf.d
+    - /etc/nginx/sites-available
+    - /etc/nginx/sites-enabled
+
+- name: Activation et démarrage Nginx
+  systemd:
+    name: nginx
+    state: started
+    enabled: true
+
+- name: Ouverture ports HTTP/HTTPS dans UFW
+  ufw:
+    rule: allow
+    port: "{{ item }}"
+    proto: tcp
+  loop:
+    - "{{ nginx_port_http }}"
+    - "{{ nginx_port_https }}"

@@ -1,0 +1,32 @@
+listen_addresses = '{{ postgresql_listen_addresses }}'
+port = {{ postgresql_port }}
+max_connections = {{ postgresql_max_connections }}
+
+# SSL
+ssl = {{ postgresql_ssl }}
+ssl_cert_file = '{{ postgresql_ssl_cert_file }}'
+ssl_key_file = '{{ postgresql_ssl_key_file }}'
+ssl_min_protocol_version = 'TLSv1.2'
+
+# Authentification
+password_encryption = {{ postgresql_password_encryption }}
+
+# Logs
+log_destination = 'stderr'
+logging_collector = on
+log_directory = '/var/log/postgresql'
+log_filename = 'postgresql-%Y-%m-%d.log'
+log_rotation_age = 1d
+log_rotation_size = 100MB
+
+log_connections = {{ postgresql_log_connections }}
+log_disconnections = {{ postgresql_log_disconnections }}
+log_duration = {{ postgresql_log_duration }}
+log_statement = '{{ postgresql_log_statement }}'
+log_min_duration_statement = {{ postgresql_log_min_duration_statement }}
+log_line_prefix = '%t [%p]: [%l-1] user=%u,db=%d,app=%a,client=%h '
+log_checkpoints = on
+log_lock_waits = on
+
+# Sécurité
+superuser_reserved_connections = 3

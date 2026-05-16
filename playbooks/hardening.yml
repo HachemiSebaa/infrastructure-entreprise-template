@@ -1,0 +1,6 @@
+---
+- name: Sécurisation ANSSI — toutes les machines
+  hosts: all
+  gather_facts: true
+  roles:
+    - anssi-hardening

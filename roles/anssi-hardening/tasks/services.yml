@@ -1,0 +1,21 @@
+---
+- name: Désactivation des services non nécessaires (ANSSI R14)
+  systemd:
+    name: "{{ item }}"
+    state: stopped
+    enabled: false
+    masked: true
+  loop: "{{ disabled_services }}"
+  ignore_errors: true
+
+- name: Activation et démarrage de auditd
+  systemd:
+    name: auditd
+    state: started
+    enabled: true
+
+- name: Activation NTP
+  systemd:
+    name: systemd-timesyncd
+    state: started
+    enabled: true

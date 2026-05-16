@@ -1,0 +1,19 @@
+---
+# Variables globales — toutes les machines
+ansible_user: ansible
+ansible_python_interpreter: /usr/bin/python3
+
+ntp_servers:
+  - 0.fr.pool.ntp.org
+  - 1.fr.pool.ntp.org
+
+timezone: Europe/Paris
+
+syslog_server: 10.0.3.10
+syslog_port: 514
+
+dns_servers:
+  - 10.0.0.1
+  - 10.0.0.2
+
+domain_name: infra.local

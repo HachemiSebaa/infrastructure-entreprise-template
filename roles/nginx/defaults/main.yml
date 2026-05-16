@@ -1,0 +1,19 @@
+---
+nginx_port_http: 80
+nginx_port_https: 443
+nginx_worker_processes: auto
+nginx_worker_connections: 1024
+nginx_keepalive_timeout: 30
+nginx_client_max_body_size: 10m
+nginx_server_tokens: "off"
+
+nginx_ssl_protocols: "TLSv1.2 TLSv1.3"
+nginx_ssl_ciphers: "ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-CHACHA20-POLY1305:ECDHE-RSA-CHACHA20-POLY1305"
+nginx_ssl_prefer_server_ciphers: "on"
+nginx_ssl_session_timeout: "1d"
+nginx_ssl_session_cache: "shared:SSL:50m"
+nginx_ssl_session_tickets: "off"
+
+nginx_hsts_max_age: 63072000
+
+nginx_sites: []

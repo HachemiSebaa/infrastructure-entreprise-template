@@ -1,0 +1,23 @@
+---
+postgresql_version: "15"
+postgresql_data_dir: "/var/lib/postgresql/{{ postgresql_version }}/main"
+postgresql_config_dir: "/etc/postgresql/{{ postgresql_version }}/main"
+
+postgresql_port: 5432
+postgresql_listen_addresses: "localhost"
+postgresql_max_connections: 100
+
+postgresql_ssl: "on"
+postgresql_ssl_cert_file: "/etc/ssl/certs/ssl-cert-snakeoil.pem"
+postgresql_ssl_key_file: "/etc/ssl/private/ssl-cert-snakeoil.key"
+
+postgresql_log_connections: "on"
+postgresql_log_disconnections: "on"
+postgresql_log_duration: "off"
+postgresql_log_statement: "ddl"
+postgresql_log_min_duration_statement: 1000
+
+postgresql_password_encryption: "scram-sha-256"
+
+postgresql_databases: []
+postgresql_users: []

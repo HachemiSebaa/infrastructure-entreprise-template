@@ -1,0 +1,53 @@
+---
+- name: Création utilisateur node_exporter
+  user:
+    name: node_exporter
+    shell: /usr/sbin/nologin
+    system: true
+    create_home: false
+
+- name: Téléchargement Node Exporter
+  get_url:
+    url: "https://github.com/prometheus/node_exporter/releases/download/v{{ node_exporter_version }}/node_exporter-{{ node_exporter_version }}.linux-amd64.tar.gz"
+    dest: "/tmp/node_exporter-{{ node_exporter_version }}.tar.gz"
+    mode: "0644"
+
+- name: Extraction Node Exporter
+  unarchive:
+    src: "/tmp/node_exporter-{{ node_exporter_version }}.tar.gz"
+    dest: /tmp
+    remote_src: true
+
+- name: Installation binaire Node Exporter
+  copy:
+    src: "/tmp/node_exporter-{{ node_exporter_version }}.linux-amd64/node_exporter"
+    dest: /usr/local/bin/node_exporter
+    owner: root
+    group: root
+    mode: "0755"
+    remote_src: true
+
+- name: Déploiement service systemd Node Exporter
+  template:
+    src: node_exporter.service.j2
+    dest: /etc/systemd/system/node_exporter.service
+    owner: root
+    group: root
+    mode: "0644"
+  notify:
+    - reload systemd
+    - restart node_exporter
+
+- name: Ouverture port Node Exporter (réseau monitoring uniquement)
+  ufw:
+    rule: allow
+    port: "{{ node_exporter_port }}"
+    proto: tcp
+    src: "10.0.3.0/24"
+
+- name: Activation Node Exporter
+  systemd:
+    name: node_exporter
+    state: started
+    enabled: true
+    daemon_reload: true

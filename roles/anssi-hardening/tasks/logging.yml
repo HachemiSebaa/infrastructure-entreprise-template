@@ -1,0 +1,38 @@
+---
+- name: Installation auditd (ANSSI R73)
+  package:
+    name:
+      - auditd
+      - audispd-plugins
+    state: present
+
+- name: Déploiement règles auditd ANSSI
+  template:
+    src: auditd.rules.j2
+    dest: /etc/audit/rules.d/99-anssi.rules
+    owner: root
+    group: root
+    mode: "0600"
+  notify: restart auditd
+
+- name: Configuration rsyslog — envoi centralisé
+  template:
+    src: rsyslog-remote.conf.j2
+    dest: /etc/rsyslog.d/99-remote.conf
+    owner: root
+    group: root
+    mode: "0644"
+  notify: restart rsyslog
+
+- name: Rotation des logs — rétention 90 jours
+  lineinfile:
+    path: /etc/logrotate.conf
+    regexp: '^rotate'
+    line: 'rotate 13'
+
+- name: Permissions strictes sur /var/log
+  file:
+    path: /var/log
+    owner: root
+    group: adm
+    mode: "0750"

@@ -1,0 +1,43 @@
+---
+- name: Création utilisateur alertmanager
+  user:
+    name: alertmanager
+    shell: /usr/sbin/nologin
+    system: true
+    create_home: false
+
+- name: Création répertoires Alertmanager
+  file:
+    path: "{{ item }}"
+    state: directory
+    owner: alertmanager
+    group: alertmanager
+    mode: "0750"
+  loop:
+    - /etc/alertmanager
+    - /var/lib/alertmanager
+
+- name: Déploiement configuration Alertmanager
+  template:
+    src: alertmanager.yml.j2
+    dest: /etc/alertmanager/alertmanager.yml
+    owner: alertmanager
+    group: alertmanager
+    mode: "0640"
+  notify: restart alertmanager
+
+- name: Déploiement règles d'alerte
+  template:
+    src: alerts.yml.j2
+    dest: /etc/prometheus/alerts.yml
+    owner: prometheus
+    group: prometheus
+    mode: "0640"
+  notify: restart prometheus
+
+- name: Activation Alertmanager
+  systemd:
+    name: alertmanager
+    state: started
+    enabled: true
+    daemon_reload: true

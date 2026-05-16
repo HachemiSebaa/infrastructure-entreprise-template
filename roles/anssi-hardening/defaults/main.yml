@@ -1,0 +1,76 @@
+---
+# SSH
+ssh_port: 22
+ssh_permit_root_login: "no"
+ssh_password_authentication: "no"
+ssh_max_auth_tries: 3
+ssh_client_alive_interval: 300
+ssh_client_alive_count_max: 2
+ssh_allowed_groups: "ansible sudo"
+ssh_ciphers:
+  - chacha20-poly1305@openssh.com
+  - aes256-gcm@openssh.com
+  - aes128-gcm@openssh.com
+ssh_macs:
+  - hmac-sha2-512-etm@openssh.com
+  - hmac-sha2-256-etm@openssh.com
+ssh_kex:
+  - curve25519-sha256
+  - curve25519-sha256@libssh.org
+  - diffie-hellman-group18-sha512
+  - diffie-hellman-group16-sha512
+
+# Kernel / sysctl
+sysctl_hardening:
+  net.ipv4.ip_forward: 0
+  net.ipv4.conf.all.send_redirects: 0
+  net.ipv4.conf.default.send_redirects: 0
+  net.ipv4.conf.all.accept_source_route: 0
+  net.ipv4.conf.all.accept_redirects: 0
+  net.ipv4.conf.all.secure_redirects: 0
+  net.ipv4.conf.all.log_martians: 1
+  net.ipv4.conf.default.log_martians: 1
+  net.ipv4.icmp_echo_ignore_broadcasts: 1
+  net.ipv4.icmp_ignore_bogus_error_responses: 1
+  net.ipv4.tcp_syncookies: 1
+  net.ipv6.conf.all.disable_ipv6: 1
+  net.ipv6.conf.default.disable_ipv6: 1
+  kernel.randomize_va_space: 2
+  kernel.dmesg_restrict: 1
+  kernel.kptr_restrict: 2
+  kernel.sysrq: 0
+  fs.suid_dumpable: 0
+
+# Comptes et mots de passe
+password_min_length: 12
+password_max_days: 90
+password_min_days: 1
+password_warn_days: 14
+password_remember: 5
+
+# Services à désactiver
+disabled_services:
+  - avahi-daemon
+  - cups
+  - rpcbind
+  - nfs-server
+  - rsh.socket
+  - rlogin.socket
+  - rexec.socket
+  - telnet.socket
+  - tftp.socket
+
+# Modules noyau à blacklister
+blacklisted_modules:
+  - cramfs
+  - freevxfs
+  - jffs2
+  - hfs
+  - hfsplus
+  - squashfs
+  - udf
+  - usb-storage
+  - dccp
+  - sctp
+  - rds
+  - tipc

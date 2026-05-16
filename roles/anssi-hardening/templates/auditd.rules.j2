@@ -1,0 +1,38 @@
+# Règles auditd — ANSSI R73
+-D
+-b 8192
+-f 1
+
+# Surveillance des accès aux fichiers sensibles
+-w /etc/passwd -p wa -k identity
+-w /etc/shadow -p wa -k identity
+-w /etc/group -p wa -k identity
+-w /etc/gshadow -p wa -k identity
+-w /etc/sudoers -p wa -k sudoers
+-w /etc/sudoers.d/ -p wa -k sudoers
+-w /etc/ssh/sshd_config -p wa -k sshd_config
+
+# Surveillance sudo et su
+-w /bin/su -p x -k priv_esc
+-w /usr/bin/sudo -p x -k priv_esc
+
+# Surveillance des modifications système
+-w /sbin/insmod -p x -k modules
+-w /sbin/rmmod -p x -k modules
+-w /sbin/modprobe -p x -k modules
+-a always,exit -F arch=b64 -S init_module -S delete_module -k modules
+
+# Surveillance des connexions réseau
+-a always,exit -F arch=b64 -S socket -F a0=2 -k network_socket
+
+# Surveillance des appels système sensibles
+-a always,exit -F arch=b64 -S execve -k exec
+-a always,exit -F arch=b64 -S open -F exit=-EACCES -k access
+-a always,exit -F arch=b64 -S open -F exit=-EPERM -k access
+
+# Surveillance des changements de temps
+-a always,exit -F arch=b64 -S adjtimex -S settimeofday -k time_change
+-w /etc/localtime -p wa -k time_change
+
+# Immuabilité des règles
+-e 2

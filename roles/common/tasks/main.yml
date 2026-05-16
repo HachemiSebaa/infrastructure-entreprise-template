@@ -1,0 +1,31 @@
+---
+- name: Configuration du hostname
+  hostname:
+    name: "{{ inventory_hostname }}"
+
+- name: Configuration du timezone
+  timezone:
+    name: "{{ timezone }}"
+
+- name: Configuration NTP
+  template:
+    src: timesyncd.conf.j2
+    dest: /etc/systemd/timesyncd.conf
+    owner: root
+    group: root
+    mode: "0644"
+  notify: restart timesyncd
+
+- name: Configuration DNS
+  template:
+    src: resolv.conf.j2
+    dest: /etc/resolv.conf
+    owner: root
+    group: root
+    mode: "0644"
+
+- name: Mise à jour /etc/hosts
+  lineinfile:
+    path: /etc/hosts
+    line: "{{ ansible_host }} {{ inventory_hostname }}.{{ domain_name }} {{ inventory_hostname }}"
+    state: present
