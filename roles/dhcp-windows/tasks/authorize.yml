@@ -1,0 +1,28 @@
+---
+- name: Autorisation du serveur DHCP dans Active Directory
+  win_shell: |
+    Import-Module DHCPServer
+    $server = "{{ inventory_hostname }}"
+    $authorized = Get-DhcpServerInDC | Where-Object { $_.DnsName -like "$server*" }
+    if (-not $authorized) {
+      Add-DhcpServerInDC -DnsName $server
+      Write-Host "Serveur DHCP autorisé dans AD"
+    } else {
+      Write-Host "Déjà autorisé"
+    }
+  register: dhcp_authorize
+  changed_when: "'autorisé dans AD' in dhcp_authorize.stdout"
+
+- name: Suppression de la notification post-installation DHCP
+  win_shell: |
+    Set-ItemProperty `
+      -Path "HKLM:\SOFTWARE\Microsoft\ServerManager\Roles\12" `
+      -Name "ConfigurationState" `
+      -Value 2
+  ignore_errors: true
+
+- name: Activation et démarrage du service DHCP
+  win_service:
+    name: DHCPServer
+    state: started
+    start_mode: auto

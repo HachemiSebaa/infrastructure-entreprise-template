@@ -1,0 +1,14 @@
+---
+- name: Installation du rôle DHCP Server
+  win_feature:
+    name:
+      - DHCP
+      - RSAT-DHCP
+    state: present
+    include_management_tools: true
+  register: dhcp_install
+
+- name: Redémarrage si nécessaire
+  win_reboot:
+    reboot_timeout: 300
+  when: dhcp_install.reboot_required

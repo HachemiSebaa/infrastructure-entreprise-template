@@ -1,0 +1,24 @@
+---
+- name: Configuration du failover DHCP entre DC01 et DC02
+  win_shell: |
+    Import-Module DHCPServer
+    {% for scope in dhcp_scopes %}
+    $fo = Get-DhcpServerv4Failover -ScopeId "{{ scope.subnet }}" -ErrorAction SilentlyContinue
+    if (-not $fo) {
+      Add-DhcpServerv4Failover `
+        -Name "Failover-{{ scope.subnet }}" `
+        -ScopeId "{{ scope.subnet }}" `
+        -PartnerServer "{{ dhcp_failover_partner }}" `
+        -Mode {{ dhcp_failover_mode }} `
+        {% if dhcp_failover_mode == 'LoadBalance' %}
+        -LoadBalancePercent {{ dhcp_failover_percentage }} `
+        {% endif %}
+        -SharedSecret "{{ vault_dhcp_failover_secret | default('ChangeMeNow') }}" `
+        -Force
+      Write-Host "Failover configuré pour {{ scope.subnet }}"
+    }
+    {% endfor %}
+  when:
+    - dhcp_failover_enabled
+    - dhcp_failover_partner != ""
+  run_once: true

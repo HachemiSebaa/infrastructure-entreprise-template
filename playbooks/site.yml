@@ -6,11 +6,12 @@
     - common
     - anssi-hardening
 
-- name: Déploiement Active Directory
+- name: Déploiement Active Directory et DHCP
   hosts: domain_controllers
   gather_facts: true
   roles:
     - active-directory
+    - dhcp-windows
 
 - name: Déploiement serveurs web
   hosts: webservers

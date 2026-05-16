@@ -58,6 +58,7 @@ ansible-playbook playbooks/site.yml --ask-vault-pass
 | `postgresql` | Linux | Base de données PostgreSQL |
 | `monitoring` | Linux | Stack de supervision |
 | `active-directory` | Windows Server | Active Directory, GPO, LDAPS, audit |
+| `dhcp-windows` | Windows Server | DHCP Server, scopes, réservations, failover |
 
 ## Ce qui est configuré
 
@@ -109,6 +110,13 @@ ansible-playbook playbooks/site.yml --ask-vault-pass
 - LDAPS avec channel binding et LDAP signing obligatoire
 - Audit avancé : Kerberos, logons, changements AD, utilisation des privilèges
 - Journaux sécurité 200 Mo, transmission vers SIEM
+
+### DHCP Windows Server
+- Installation et autorisation du rôle DHCP dans Active Directory
+- Scopes configurables : plage, masque, durée de bail, routeur, DNS, domaine
+- Exclusions et réservations par adresse MAC
+- Failover DHCP entre DC01 et DC02 (Hot Standby ou Load Balance)
+- Audit activé, DNS dynamique sécurisé uniquement, détection de conflits
 
 ### Monitoring
 - Prometheus + Grafana + Alertmanager + Node Exporter

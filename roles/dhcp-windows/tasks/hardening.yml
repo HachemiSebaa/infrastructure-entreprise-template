@@ -1,0 +1,33 @@
+---
+- name: Activation de l'audit DHCP
+  win_shell: |
+    Import-Module DHCPServer
+    Set-DhcpServerAuditLog -Enable $true -Path "C:\Windows\System32\dhcp" -MaxMBFileSize 70
+
+- name: Activation des mises à jour DNS dynamiques sécurisées uniquement
+  win_shell: |
+    Import-Module DHCPServer
+    {% for scope in dhcp_scopes %}
+    Set-DhcpServerv4DnsSetting `
+      -ScopeId "{{ scope.subnet }}" `
+      -DynamicUpdates "OnClientRequest" `
+      -DeleteDnsRRonLeaseExpiry $true `
+      -UpdateDnsRRForOlderClients $false
+    {% endfor %}
+
+- name: Désactivation des réponses DHCP non autorisées (DHCP Snooping via GPO)
+  win_shell: |
+    Import-Module DHCPServer
+    Set-DhcpServerSetting -ConflictDetectionAttempts 2
+
+- name: Activation de la journalisation des événements DHCP
+  win_shell: |
+    wevtutil sl "Microsoft-Windows-DHCP-Server/Operational" /e:true /ms:52428800
+    wevtutil sl "Microsoft-Windows-DHCP-Server/FilterNotifications" /e:true
+
+- name: Restriction accès console DHCP aux admins uniquement
+  win_shell: |
+    $acl = Get-Acl "HKLM:\SYSTEM\CurrentControlSet\Services\DHCPServer"
+    $acl.SetAccessRuleProtection($true, $false)
+    Set-Acl "HKLM:\SYSTEM\CurrentControlSet\Services\DHCPServer" $acl
+  ignore_errors: true

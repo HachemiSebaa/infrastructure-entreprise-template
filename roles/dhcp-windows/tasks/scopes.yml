@@ -1,0 +1,44 @@
+---
+- name: Création des scopes DHCP
+  win_shell: |
+    Import-Module DHCPServer
+    $scope = Get-DhcpServerv4Scope | Where-Object { $_.ScopeId -eq "{{ item.subnet }}" }
+    if (-not $scope) {
+      Add-DhcpServerv4Scope `
+        -Name "{{ item.name }}" `
+        -StartRange "{{ item.start }}" `
+        -EndRange "{{ item.end }}" `
+        -SubnetMask "{{ item.mask }}" `
+        -LeaseDuration (New-TimeSpan -Days {{ item.lease_duration_days }}) `
+        -Description "{{ item.description | default('') }}" `
+        -State Active
+      Write-Host "Scope {{ item.subnet }} créé"
+    } else {
+      Write-Host "Scope {{ item.subnet }} existe déjà"
+    }
+  loop: "{{ dhcp_scopes }}"
+  register: scope_result
+  changed_when: "'créé' in scope_result.stdout"
+
+- name: Configuration des options par scope (routeur, DNS, domaine)
+  win_shell: |
+    Import-Module DHCPServer
+    Set-DhcpServerv4OptionValue `
+      -ScopeId "{{ item.subnet }}" `
+      -Router "{{ item.router }}" `
+      -DnsServer {{ item.dns_servers | join(',') }} `
+      -DnsDomain "{{ item.domain_name }}"
+  loop: "{{ dhcp_scopes }}"
+
+- name: Configuration des exclusions
+  win_shell: |
+    Import-Module DHCPServer
+    $excl = Get-DhcpServerv4ExclusionRange -ScopeId "{{ item.scope_subnet }}" -ErrorAction SilentlyContinue |
+            Where-Object { $_.StartRange -eq "{{ item.start }}" }
+    if (-not $excl) {
+      Add-DhcpServerv4ExclusionRange `
+        -ScopeId "{{ item.scope_subnet }}" `
+        -StartRange "{{ item.start }}" `
+        -EndRange "{{ item.end }}"
+    }
+  loop: "{{ dhcp_exclusions }}"

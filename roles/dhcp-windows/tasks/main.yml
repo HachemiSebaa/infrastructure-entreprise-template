@@ -1,0 +1,7 @@
+---
+- import_tasks: install.yml
+- import_tasks: authorize.yml
+- import_tasks: scopes.yml
+- import_tasks: reservations.yml
+- import_tasks: failover.yml
+- import_tasks: hardening.yml

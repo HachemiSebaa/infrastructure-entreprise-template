@@ -1,0 +1,20 @@
+---
+- name: Création des réservations DHCP
+  win_shell: |
+    Import-Module DHCPServer
+    $mac = "{{ item.mac }}" -replace '[:-]', '-'
+    $existing = Get-DhcpServerv4Reservation -ScopeId "{{ item.scope_subnet }}" -ErrorAction SilentlyContinue |
+                Where-Object { $_.ClientId -eq $mac }
+    if (-not $existing) {
+      Add-DhcpServerv4Reservation `
+        -ScopeId "{{ item.scope_subnet }}" `
+        -IPAddress "{{ item.ip }}" `
+        -ClientId $mac `
+        -Name "{{ item.name }}" `
+        -Description "{{ item.description | default('') }}"
+      Write-Host "Réservation {{ item.name }} créée"
+    }
+  loop: "{{ dhcp_reservations }}"
+  when: dhcp_reservations | length > 0
+  register: reservation_result
+  changed_when: "'créée' in reservation_result.stdout"
